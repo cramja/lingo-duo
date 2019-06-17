@@ -1,0 +1,6 @@
+{
+    "SECRET_KEY": "XXX",
+    "TESTING": true,
+    "DEBUG": true,
+    "PORT": 8888
+}

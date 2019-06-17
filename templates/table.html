@@ -1,0 +1,22 @@
+<table class="table">
+    <thead>
+    <tr>
+        {% for header in table.headers() %}
+        <th scope="col">{{ header }}</th>
+        {% endfor %}
+    </tr>
+    </thead>
+    <tbody>
+    {% for row in table.rows() %}
+    <tr>
+        {% for ele in row %}
+        {% if ele.anchor %}
+        <td><a href="{{ele.anchor}}">{{ ele.value }}</a></td>
+        {% else %}
+        <td>{{ ele.value }}</td>
+        {% endif %}
+        {% endfor %}
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
