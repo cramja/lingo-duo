@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Gender{% endblock %}
+{% block content %}
+<div id="callback-url" class="d-none">{{callback_url}}</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h2 id="word">Loading...</h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col" id="translation"></div>
+    </div>
+    <div class="btn-group" role="group" aria-label="Genders">
+        <button type="button" class="btn btn-secondary" id="btn-male">Male</button>
+        <button type="button" class="btn btn-secondary" id="btn-female">Female</button>
+        <button type="button" class="btn btn-secondary" id="btn-neuter">Neuter</button>
+    </div>
+</div>
+
+<script src="static/gender.js"></script>
+{% endblock %}

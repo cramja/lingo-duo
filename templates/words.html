@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Words{% endblock %}
+{% block content %}
+<div class="container">
+    {% if table %}
+    {% include "table.html" %}
+    {% endif %}
+</div>
+{% endblock %}

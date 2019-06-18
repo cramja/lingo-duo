@@ -1,7 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Index{% endblock %}
 {% block content %}
-{% if table %}
-    {% include "table.html" %}
-{% endif %}
+<div class="container">
+    <div class="btn-group-vertical" role="group" aria-label="Games">
+        <a href="gender">
+            <button type="button" class="btn btn-secondary"
+                    aria-label="Gender is not a spectrum, there are 4: None, Masculine, Feminine, and Neuter">Gender
+            </button>
+        </a>
+        <a href="words">
+            <button type="button" class="btn btn-secondary">Word List</button>
+        </a>
+    </div>
+</div>
 {% endblock %}
