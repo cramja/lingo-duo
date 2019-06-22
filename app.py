@@ -3,14 +3,16 @@ import logging
 
 from os import environ
 import argparse
-from flask import Flask, g, redirect, request, Response, render_template, flash, get_flashed_messages, Session, session, jsonify
-from flask_oidc import OpenIDConnect
+from flask import Flask, g, redirect, request, Response, render_template, flash, get_flashed_messages, Session, session, \
+    jsonify, url_for
+from functools import wraps
 import requests
 import pickle
 from uuid import uuid4
 import random
 
 from lib import duolingo, helpers
+from lib.storage import SessionStorage
 from lib.viewmodel import TableTemplate, ColumnTemplate, Table
 
 logging.basicConfig(level=logging.DEBUG)
@@ -18,26 +20,37 @@ logger = logging.getLogger(__file__)
 
 app = Flask(__name__)
 app.config.update(helpers.get_config())
+storage = SessionStorage()
 
 
 def require_login(fn):
+    @wraps(fn)
     def _login(*args, **kwargs):
-        if 'duo' not in session:
-            return redirect("/login")
+        if 'id' not in session:
+            return redirect(url_for(get_login.__name__))
         else:
-            fn(*args, **kwargs)
+            return fn(*args, **kwargs)
 
     return _login
 
 
+def _get_duo():
+    id = session.get("id", None)
+    state = storage.get_session(id)
+    if state is None:
+        raise Exception("session not found, please log in")
+    return pickle.loads(state)
+
+
 @app.route('/')
-def index():
+def get_index():
     return render_template("index.html")
 
 
 @app.route('/words')
-def words():
-    duo = pickle.loads(session['duo'])
+@require_login
+def get_words():
+    duo = _get_duo()
     vocab = duo.get_vocabulary()
     tt = TableTemplate(
         [
@@ -51,20 +64,22 @@ def words():
 
 
 @app.route('/gender')
-def gender():
-    duo = pickle.loads(session['duo'])
-    # vocab = duo.get_vocabulary()
-    return render_template("gender.html", callback_url=request.host_url + "gender.json")
+@require_login
+def get_gender():
+    return render_template(
+        "gender.html",
+        callback_url=url_for(get_gender_json.__name__)
+    )
 
 
 @app.route('/gender.json')
-def gender_json():
-    duo = pickle.loads(session['duo'])
+def get_gender_json():
+    duo = _get_duo()
     vocab = duo.get_vocabulary()
     # select 10 words which have a gender
     words = []
     while len(words) < 10:
-        word = vocab[random.randint(0,len(vocab))]
+        word = vocab[random.randint(0, len(vocab))]
         if word['gender'] is not None:
             words.append({
                 "word": word['word_string'],
@@ -84,16 +99,19 @@ def post_login():
         request.form['username'],
         request.form['password'],
     )
-    session['duo'] = pickle.dumps(duo)
-    session['username'] = duo.username
-    return redirect("/")
+    session['id'] = duo.username
+    storage.put_session(duo.username, pickle.dumps(duo))
+    return redirect(url_for(get_index.__name__))
 
 
 @app.route('/logout')
 def logout():
-    session.pop('duo', None)
-    session.pop('username', None)
-    return redirect("/login")
+    if 'id' in session:
+        _get_duo().logout()
+        storage.remove_session(session['id'])
+        session.pop('id', None)
+
+    return redirect(url_for(get_login.__name__))
 
 
 if __name__ == '__main__':

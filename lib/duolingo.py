@@ -17,7 +17,7 @@ class Duo(object):
         """
         login_url = "https://www.duolingo.com/login"
         data = {"login": username, "password": password}
-        response = self._req(login_url, data=data)
+        response = self._post(login_url, data=data)
         attempt = response.json()
 
         if attempt.get('response') == 'OK':
@@ -27,11 +27,11 @@ class Duo(object):
         else:
             raise Exception("Login failed")
 
-    def _req(self, url, data=None):
+    def _post(self, url, data=None):
         headers = {}
         if self.jwt is not None:
             headers['Authorization'] = 'Bearer ' + self.jwt
-        req = requests.Request('POST' if data else 'GET',
+        req = requests.Request('POST',
                                url,
                                json=data,
                                headers=headers,
@@ -39,9 +39,24 @@ class Duo(object):
         prepped = req.prepare()
         return self.session.send(prepped)
 
+    def _get(self, url):
+        headers = {}
+        if self.jwt is not None:
+            headers['Authorization'] = 'Bearer ' + self.jwt
+        req = requests.Request('GET',
+                               url,
+                               headers=headers,
+                               cookies=self.session.cookies)
+        prepped = req.prepare()
+        return self.session.send(prepped)
+
     def get_vocabulary(self):
         vocab_url = "https://www.duolingo.com/vocabulary/overview"
-        response = self._req(vocab_url)
+        response = self._get(vocab_url)
         response.raise_for_status()
 
         return response.json()['vocab_overview']
+
+    def logout(self):
+        logout_url = "https://www.duolingo.com/logout"
+        self._post(logout_url)
